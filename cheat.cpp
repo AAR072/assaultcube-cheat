@@ -121,9 +121,12 @@ void NopEx(BYTE* dst, unsigned int size, HANDLE hProcess)
 
 int main()
 {
+    float oldY = 0;
     bool toggleAmmo = false;
     bool toggleHealth = false;
     bool isRunning = true;
+    bool toggleFlight = false;
+    bool toggleArmor = false;
     // Get process id from name
     DWORD procId = GetProcId(L"ac_client.exe");
 
@@ -179,6 +182,12 @@ int main()
         std::cout << "Health value hex: 0x" << std::hex << healthValue << std::endl;
         std::cout << "Health value dec: " << std::dec << healthValue << std::endl;
 
+        // read armor value
+        int armorValue = 0;
+        ReadProcessMemory(hProc, (BYTE *)healthPtr + 0x4, &armorValue, sizeof(armorValue), 0);
+        std::cout << "Armor value hex: 0x" << std::hex << armorValue << std::endl;
+        std::cout << "Armor value dec: " << std::dec << armorValue << std::endl;
+
         // read x value
         float xValue = 0;
         ReadProcessMemory(hProc, (BYTE *)xPtr, &xValue, sizeof(xValue), 0);
@@ -196,7 +205,8 @@ int main()
         ReadProcessMemory(hProc, (BYTE *)zPtr, &zValue, sizeof(zValue), 0);
         std::cout << "Z value hex: 0x" << std::hex << zValue << std::endl;
         std::cout << "Z value dec: " << std::dec << zValue << std::endl;
-    
+
+        oldY = ReadProcessMemory(hProc, (BYTE *)yPtr, &yValue, sizeof(yValue), 0);
         // write value
         while (isRunning)
         {   
@@ -208,6 +218,8 @@ int main()
             {
                 // toggle ammo
                 toggleAmmo = !toggleAmmo;
+                // wait 0.25 seconds
+                Sleep(250);
             }
             if (toggleAmmo)
                 {
@@ -219,6 +231,8 @@ int main()
             {
                 // toggle health
                 toggleHealth = !toggleHealth;
+                // wait 0.25 seconds
+                Sleep(250);
             }
             if (toggleHealth)
                 {
@@ -227,6 +241,19 @@ int main()
                 }
             // if f3 is pressed
             if(GetKeyState(VK_F3) & 0x8000)
+            {
+                // toggle armor
+                toggleArmor = !toggleArmor;
+                // wait 0.25 seconds
+                Sleep(250);
+            }
+            if (toggleArmor)
+                {
+                    int newArmorValue = 69420;
+                    WriteProcessMemory(hProc, (BYTE *)healthPtr + 0x4, &newArmorValue, sizeof(newArmorValue), 0); 
+                }
+            // if f11 is pressed
+            if(GetKeyState(VK_F11) & 0x8000)
             {
             std::cout << "Enter x value to write: ";
             float newXValue = 0;
@@ -241,6 +268,33 @@ int main()
             WriteProcessMemory(hProc, (BYTE *)yPtr, &newYValue, sizeof(newYValue), 0);
             WriteProcessMemory(hProc, (BYTE *)zPtr, &newZValue, sizeof(newZValue), 0);
             }
+            // if f4 is pressed
+            if(GetKeyState(VK_F4) & 0x8000)
+            {
+                // toggle flight
+                toggleFlight = !toggleFlight;
+                Sleep(250);
+            }
+            if (toggleFlight)
+                {
+                    WriteProcessMemory(hProc, (BYTE *)yPtr, &yValue, sizeof(yValue), 0);
+                    // if space is pressed
+                    if(GetKeyState(VK_SPACE) & 0x8000)
+                    {
+                        yValue += 0.001;
+                        WriteProcessMemory(hProc, (BYTE *)yPtr, &yValue, sizeof(yValue), 0);
+
+                    }
+                    // if left shift is pressed
+                    if(GetKeyState(VK_LSHIFT) & 0x8000)
+                    {
+                        // decrease y value by 0.2
+                        yValue -= 0.001;
+                        WriteProcessMemory(hProc, (BYTE *)yPtr, &yValue, sizeof(yValue), 0);
+                    }
+                }
+            
+            
             // if f12 is pressed exit
             if(GetKeyState(VK_F12) & 0x8000)
             {
